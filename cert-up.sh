@@ -53,7 +53,8 @@ generateCrt () {
     --certpath ${CRT_PATH}/cert.pem \
     --key-file ${CRT_PATH}/privkey.pem \
     --fullchain-file ${CRT_PATH}/fullchain.pem
-
+  ${ACME_BIN_PATH}/acme.sh --toPkcs -d ${DOMAIN} -d *.${DOMAIN} --password ${PFX_PASS}
+  
   if [ -s "${CRT_PATH}/cert.pem" ]; then
     echo 'done generateCrt'
     return 0
@@ -68,18 +69,18 @@ generateCrt () {
 updateService () {
   echo 'begin updateService'
   echo 'cp cert path to des'
-  /bin/python2 ${BASE_ROOT}/crt_cp.py ${CRT_PATH_NAME}
+  python2 ${BASE_ROOT}/crt_cp.py ${CRT_PATH_NAME}
   echo 'done updateService'
 }
 
 reloadWebService () {
   echo 'begin reloadWebService'
   echo 'reloading new cert...'
-  /usr/syno/etc/rc.sysv/nginx.sh reload
-  echo 'relading Apache 2.2'
-  stop pkg-apache22
-  start pkg-apache22
-  reload pkg-apache22
+  systemctl reload nginx
+#  echo 'relading Apache 2.2'
+#  systemctl stop pkg-apache22
+#  systemctl start pkg-apache22
+#  systemctl reload pkg-apache22
   echo 'done reloadWebService'  
 }
 
@@ -108,6 +109,7 @@ updateCrt () {
   generateCrt
   updateService
   reloadWebService
+  bash ${BASE_ROOT}/cert-copy.sh
   echo '------ end updateCrt ------'
 }
 
